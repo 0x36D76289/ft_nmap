@@ -7,6 +7,7 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 #include <net/if.h>
+#include <sys/types.h>
 #include <pcap.h>
 #include <pthread.h>
 #include <stdbool.h>

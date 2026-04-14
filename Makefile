@@ -3,7 +3,7 @@ OBJDIR := obj
 
 CC := cc
 CFLAGS := -Wall -Wextra -Werror -std=c11
-CPPFLAGS := -Iinclude
+CPPFLAGS := -D_DEFAULT_SOURCE -D_BSD_SOURCE -Iinclude
 LDLIBS := -lpcap -lpthread
 
 SRCS := \

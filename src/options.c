@@ -30,6 +30,43 @@ static char *trim_spaces(char *value)
     return (value);
 }
 
+static bool token_is_blank(const char *value, size_t len)
+{
+    size_t i;
+
+    i = 0;
+    while (i < len)
+    {
+        if (!isspace((unsigned char)value[i]))
+            return (false);
+        i++;
+    }
+    return (true);
+}
+
+static int validate_ports_syntax(const char *spec)
+{
+    const char *segment_start;
+    const char *comma;
+    size_t segment_len;
+
+    segment_start = spec;
+    while (1)
+    {
+        comma = strchr(segment_start, ',');
+        if (comma == NULL)
+            segment_len = strlen(segment_start);
+        else
+            segment_len = (size_t)(comma - segment_start);
+        if (token_is_blank(segment_start, segment_len))
+            return (-1);
+        if (comma == NULL)
+            break;
+        segment_start = comma + 1;
+    }
+    return (0);
+}
+
 static int parse_port_token(const char *token, bool seen[65536], size_t *count)
 {
     char *dash;
@@ -76,6 +113,8 @@ static int parse_ports_spec(const char *spec, t_options *opts)
     size_t count;
     long port;
 
+    if (validate_ports_syntax(spec) != 0)
+        return (-1);
     memset(seen, 0, sizeof(seen));
     copy = strdup(spec);
     if (copy == NULL)

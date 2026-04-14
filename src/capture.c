@@ -160,7 +160,10 @@ int capture_tcp_response(pcap_t *handle, const struct in_addr *src_ip,
             return (1);
         ret = pcap_next_ex(handle, &header, &packet);
         if (ret == 0)
+        {
+            usleep(1000);
             continue;
+        }
         if (ret < 0)
             return (-1);
         caplen = header->caplen;
@@ -220,7 +223,10 @@ int capture_udp_response(pcap_t *handle, const struct in_addr *src_ip,
             return (1);
         ret = pcap_next_ex(handle, &header, &packet);
         if (ret == 0)
+        {
+            usleep(1000);
             continue;
+        }
         if (ret < 0)
             return (-1);
         caplen = header->caplen;

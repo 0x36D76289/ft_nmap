@@ -180,6 +180,7 @@ int run_tcp_probe(const char *dst_ip, uint16_t dst_port, uint8_t tcp_flags,
     pcap_handle = pcap_open_live(ifname, BUFSIZ, 0, FT_NMAP_PCAP_TIMEOUT_MS, errbuf);
     if (pcap_handle == NULL)
         return (-1);
+    (void)pcap_setnonblock(pcap_handle, 1, errbuf);
     src_port = random_ephemeral_port();
     if (send_tcp_packet(&src_ip, &remote_ip, src_port, dst_port, tcp_flags) != 0)
     {
@@ -245,6 +246,7 @@ int run_udp_probe(const char *dst_ip, uint16_t dst_port, t_scan_status *out_stat
     pcap_handle = pcap_open_live(ifname, BUFSIZ, 0, FT_NMAP_PCAP_TIMEOUT_MS, errbuf);
     if (pcap_handle == NULL)
         return (-1);
+    (void)pcap_setnonblock(pcap_handle, 1, errbuf);
     src_port = random_ephemeral_port();
     if (send_udp_probe(&src_ip, &remote_ip, src_port, dst_port) != 0)
     {
