@@ -1,0 +1,129 @@
+networks:
+  nmap_lab:
+    name: nmap_lab
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+
+services:
+
+  # -- Client -------------------------------------------------
+  # ft_nmap is compiled and run from here
+  client:
+    build:
+      context: ./client
+    container_name: lab_client
+    hostname: client
+    networks:
+      nmap_lab:
+        ipv4_address: 192.168.100.2
+    volumes:
+      - ..:/ft_nmap        # project root mounted at /ft_nmap
+    cap_add:
+      - NET_ADMIN          # iptables manipulation
+      - NET_RAW            # raw sockets for ft_nmap / nmap
+    stdin_open: true
+    tty: true
+    command: sleep infinity
+
+  # -- target-basic (192.168.100.10) --------------------------
+  # Simple mixed scenario:
+  #   TCP  22        OPEN     (SSH)
+  #   TCP  80        OPEN     (HTTP)
+  #   TCP  100-110   FILTERED (DROP)
+  #   UDP  500-510   FILTERED (DROP)
+  #   others         CLOSED
+  target-basic:
+    build:
+      context: ./target-basic
+    container_name: lab_target_basic
+    hostname: target-basic
+    networks:
+      nmap_lab:
+        ipv4_address: 192.168.100.10
+    cap_add:
+      - NET_ADMIN
+
+  # -- target-firewall (192.168.100.20) -----------------------
+  # Tests DROP vs REJECT distinction:
+  #   TCP  22        OPEN     (SSH)
+  #   TCP  80        OPEN     (HTTP)
+  #   TCP  200-220   FILTERED (DROP - no response)
+  #   TCP  300-320   CLOSED   (REJECT/RST - explicit reset)
+  #   UDP  200-220   FILTERED (DROP)
+  #   UDP  300-320   CLOSED   (REJECT/ICMP unreachable)
+  #   others         CLOSED
+  target-firewall:
+    build:
+      context: ./target-firewall
+    container_name: lab_target_firewall
+    hostname: target-firewall
+    networks:
+      nmap_lab:
+        ipv4_address: 192.168.100.20
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      net.ipv4.icmp_ratelimit: 0
+
+  # -- target-services (192.168.100.30) -----------------------
+  # Many open TCP services:
+  #   TCP  21        OPEN     (FTP)
+  #   TCP  22        OPEN     (SSH)
+  #   TCP  25        OPEN     (SMTP)
+  #   TCP  80        OPEN     (HTTP)
+  #   TCP  143       OPEN     (IMAP)
+  #   TCP  443       OPEN     (HTTPS)
+  #   TCP  3306      OPEN     (MySQL)
+  #   TCP  3389      OPEN     (RDP)
+  #   TCP  6379      OPEN     (Redis)
+  #   others         CLOSED
+  target-services:
+    build:
+      context: ./target-services
+    container_name: lab_target_services
+    hostname: target-services
+    networks:
+      nmap_lab:
+        ipv4_address: 192.168.100.30
+    cap_add:
+      - NET_ADMIN
+
+  # -- target-udp (192.168.100.40) ----------------------------
+  # UDP-focused scenario:
+  #   UDP  53        OPEN     (DNS - dnsmasq, sends real responses)
+  #   UDP  69        OPEN     (TFTP - socat, sends response)
+  #   UDP  123       OPEN     (NTP  - socat, sends response)
+  #   UDP  161       OPEN     (SNMP - socat, sends response)
+  #   UDP  200-210   FILTERED (DROP)
+  #   UDP  300-310   CLOSED   (REJECT/ICMP unreachable)
+  #   TCP  22        OPEN     (SSH)
+  #   TCP  others    CLOSED
+  target-udp:
+    build:
+      context: ./target-udp
+    container_name: lab_target_udp
+    hostname: target-udp
+    networks:
+      nmap_lab:
+        ipv4_address: 192.168.100.40
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      net.ipv4.icmp_ratelimit: 0
+
+  # -- target-filtered (192.168.100.50) -----------------------
+  # Everything filtered:
+  #   ALL TCP        FILTERED (DROP)
+  #   ALL UDP        FILTERED (DROP)
+  target-filtered:
+    build:
+      context: ./target-filtered
+    container_name: lab_target_filtered
+    hostname: target-filtered
+    networks:
+      nmap_lab:
+        ipv4_address: 192.168.100.50
+    cap_add:
+      - NET_ADMIN

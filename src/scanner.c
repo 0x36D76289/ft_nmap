@@ -138,12 +138,12 @@ static t_scan_status conclude_port(const t_port_result *port_result)
     }
     if (has_open)
         return (STATUS_OPEN);
+    if (has_filtered)
+        return (STATUS_FILTERED);
     if (has_closed)
         return (STATUS_CLOSED);
     if (has_unfiltered)
         return (STATUS_UNFILTERED);
-    if (has_filtered)
-        return (STATUS_FILTERED);
     if (has_open_filtered)
         return (STATUS_OPEN_FILTERED);
     if (has_error)

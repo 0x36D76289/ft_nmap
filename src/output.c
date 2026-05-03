@@ -39,14 +39,61 @@ static bool prefer_udp_service_name(const t_port_result *port_result)
     return (false);
 }
 
+#define RESULTS_WIDTH 60
+#define ROW_INDENT    28  /* port(6) + sp(1) + service(20) + sp(1) */
+
 static void print_table_header(void)
 {
-    printf("%-6s %-20s %-60s %-14s\n",
-           "Port", "Service Name", "Results", "Conclusion");
-    printf("%-6s %-20s %-60s %-14s\n",
-           "------", "--------------------",
+    printf("%-6s %-20s %-*s  %-14s\n",
+           "Port", "Service Name", RESULTS_WIDTH, "Results", "Conclusion");
+    printf("%-6s %-20s %-*s  %-14s\n",
+           "------", "--------------------", RESULTS_WIDTH,
            "------------------------------------------------------------",
            "--------------");
+}
+
+static void print_wrapped_results(const char *text, const char *conclusion)
+{
+    size_t len;
+    size_t pos;
+    size_t chunk_len;
+    size_t i;
+    bool   first;
+
+    len = strlen(text);
+    if (len == 0)
+    {
+        printf("%-*s  %s\n", RESULTS_WIDTH, "-", conclusion);
+        return;
+    }
+    pos = 0;
+    first = true;
+    while (pos < len)
+    {
+        if (!first)
+            printf("%*s", ROW_INDENT, "");
+        if (len - pos <= RESULTS_WIDTH)
+        {
+            printf("%-*s  %s\n", RESULTS_WIDTH, text + pos, conclusion);
+            break;
+        }
+        chunk_len = RESULTS_WIDTH;
+        i = RESULTS_WIDTH;
+        while (i > 0)
+        {
+            if (text[pos + i] == ' ' && text[pos + i - 1] == ',')
+            {
+                chunk_len = i - 1;
+                break;
+            }
+            i--;
+        }
+        printf("%.*s\n", (int)chunk_len, text + pos);
+        pos += chunk_len;
+        if (pos < len && text[pos] == ',') pos++;
+        if (pos < len && text[pos] == ' ') pos++;
+        first = false;
+    }
 }
 
 static void print_target_table(const char *title, const t_options *opts,
@@ -66,12 +113,12 @@ static void print_target_table(const char *title, const t_options *opts,
         {
             build_results_string(opts, &target_result->ports[i],
                                  results_text, sizeof(results_text));
-            printf("%-6u %-20s %-60s %-14s\n",
+            printf("%-6u %-20s ",
                    target_result->ports[i].port,
                    service_name(target_result->ports[i].port,
-                                prefer_udp_service_name(&target_result->ports[i])),
-                   results_text,
-                   scan_status_name(target_result->ports[i].conclusion));
+                                prefer_udp_service_name(&target_result->ports[i])));
+            print_wrapped_results(results_text,
+                                  scan_status_name(target_result->ports[i].conclusion));
             rows++;
         }
         i++;
